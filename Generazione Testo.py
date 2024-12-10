@@ -1,7 +1,8 @@
 import os
+import docx
 from openai import OpenAI
 
-documentFile = open('document.txt', mode='r')
+documentFile = open('document.docx', mode='r')
 document = documentFile.read()
 documentFile.close()
 
