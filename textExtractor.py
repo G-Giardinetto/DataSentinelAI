@@ -1,15 +1,26 @@
 import PyPDF2
+import docx
+import re
 def extract(file):
     """
     Extracts the text from a PDF file.
     """
     text = ""
+    extension = re.search(r"\.+[A-Za-z]*", file).group()
 
-    if file.endswith(".pdf"):
-        with open(file, "rb") as f:
-            pdf = PyPDF2.PdfFileReader(f)
-            for page in range(pdf.getNumPages()):
-                text += pdf.getPage(page).extract_text()
-    elif file.endswith(".txt") || file.endswith(".docx"):
-        with open(file, "r") as f:
-            text = f.read()
+    match extension:
+        case ".docx":
+            doc = docx.Document(file)
+            for para in doc.paragraphs:
+                text += para.text + "\n"
+            return text
+        case ".pdf":
+            with open(file, "rb") as f:
+                pdf = PyPDF2.PdfFileReader(f)
+                for page in range(pdf.getNumPages()):
+                    text += pdf.getPage(page).extract_text()
+        case ".txt":
+            with open(file, "r") as f:
+                text = f.read()
+            return text
+    return None
