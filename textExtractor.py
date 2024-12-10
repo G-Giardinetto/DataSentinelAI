@@ -2,9 +2,6 @@ import PyPDF2
 import docx
 import re
 def extract(file):
-    """
-    Extracts the text from a PDF file.
-    """
     text = ""
     extension = re.search(r"\.+[A-Za-z]*", file).group()
 
@@ -19,6 +16,7 @@ def extract(file):
                 pdf = PyPDF2.PdfFileReader(f)
                 for page in range(pdf.getNumPages()):
                     text += pdf.getPage(page).extract_text()
+            return text
         case ".txt":
             with open(file, "r") as f:
                 text = f.read()
