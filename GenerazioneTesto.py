@@ -5,11 +5,9 @@ from openai import OpenAI
 
 #semplice codice per generare testo
 def generateReport(document):
-    os.system('lms server start')
-    os.system('lms load lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf')
-    #lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf -> Stringa presa dal Software LMStudio, servirà percaricare e scaricare il modello dal server
-    client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
 
+    client = start()
+    
     completion = client.chat.completions.create(model ='lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf',messages=[
                         {"role": "system", "content": "Initially you should know if the user consents to treating of "
                                                       "his data, if yes you can do anything you want with this data. "
@@ -29,9 +27,8 @@ def generateReport(document):
     return (completion.choices[0].message.content).strip()
 
 def editDocument(document,report):
-    os.system('lms server start')
-    os.system('lms load lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf')
-    client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
+
+    client = start()
 
     completion = client.chat.completions.create(
         model='lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf', messages=[
@@ -52,6 +49,12 @@ def editDocument(document,report):
     stop()
     return (completion.choices[0].message.content).strip()
 
+
+def start():
+    os.system('lms server start')
+    os.system('lms load lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf')
+    # lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf -> Stringa presa dal Software LMStudio, servirà percaricare e scaricare il modello dal server
+    return OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
 
 def stop():
     os.system('lms unload --all')#scarico dal server tutti i modelli
