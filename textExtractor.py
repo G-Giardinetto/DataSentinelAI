@@ -5,7 +5,7 @@ import docx
 import re
 def extract(file):
     text = ""
-    extension = re.search(r"\.+[A-Za-z]*", file.name).group()
+    extension = findExtension(file)
     uploaded_file = io.BytesIO(file.read())
     match extension:
         case ".docx":
@@ -22,3 +22,6 @@ def extract(file):
             text = uploaded_file.read()
             return text
     return None
+
+def findExtension(file):
+    return re.search(r"\.+[A-Za-z]*", file.name).group()

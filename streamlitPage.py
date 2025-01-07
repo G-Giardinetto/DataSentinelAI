@@ -1,5 +1,6 @@
 import streamlit as st
-from textExtractor import extract
+from textExtractor import extract, writeFile
+from textExtractor import findExtension
 import GenerazioneTesto
 
 st.title('Analyze your data')
@@ -8,6 +9,7 @@ file = st.file_uploader("Upload your file to get you report", type=['pdf', 'docx
 testo=""
 flag=False
 if file is not None:
+    st.session_state['fileExtension'] = findExtension(file)
     testo = extract(file)
     if st.button("Genera report", type="primary"):
         flag=True
@@ -16,14 +18,15 @@ if file is not None:
                 report = GenerazioneTesto.generateReport(testo)
                 status.update(
                     label="Analisi completa!", state="complete", expanded=True)
-                st.markdown(f"Ecco il tuo report:\\ \n {report}")
+                st.markdown(f"Ecco il tuo report:\n\n {report}")
                 st.session_state['report'] = report
+                st.session_state['button'] = False
 
 if flag:
     st.write("Modificare il file secondo le indicazioni?")
     button = st.button("Modifica", type="secondary", disabled=False)
 else:
-    button = st.button("Modifica", type="secondary", disabled=True, )
+    button = st.button("Modifica", type="secondary", disabled=True)
 
 if button:
     report=st.session_state['report']
