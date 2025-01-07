@@ -28,12 +28,18 @@ if flag:
 else:
     button = st.button("Modifica", type="secondary", disabled=True)
 
-if button:
+buttonFlag= st.session_state['button'] if not None else False
+
+if button | buttonFlag:
+    st.session_state['button']=True
     report=st.session_state['report']
     with st.status('Modificando...') as status:
         left, right = st.columns(2)
         edited = GenerazioneTesto.editDocument(testo, report)
         status.update(
             label="Modifica completata!", state="complete", expanded=True)
-        left.markdown(f"File modificato:\\ \n {edited}")
-        right.markdown(f"File originale:\\ \n {testo}")
+        left.markdown(f"File modificato:\n\n{edited}")
+        right.markdown(f"File originale:\n\n{testo}")
+    extension = st.session_state['fileExtension']
+    st.download_button(label="Scarica file modificato", data=writeFile(edited, extension),
+                       file_name='edited' + extension)
