@@ -20,7 +20,6 @@ if file is not None:
                     label="Analisi completa!", state="complete", expanded=True)
                 st.markdown(f"Ecco il tuo report:\n\n {report}")
                 st.session_state['report'] = report
-                st.session_state['button'] = False
 
 if flag:
     st.write("Modificare il file secondo le indicazioni?")
@@ -28,10 +27,8 @@ if flag:
 else:
     button = st.button("Modifica", type="secondary", disabled=True)
 
-buttonFlag= st.session_state['button'] if not None else False
 
-if button | buttonFlag:
-    st.session_state['button']=True
+if button:
     report=st.session_state['report']
     with st.status('Modificando...') as status:
         left, right = st.columns(2)
