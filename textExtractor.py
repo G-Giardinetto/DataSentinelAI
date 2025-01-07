@@ -40,7 +40,7 @@ def writeFile(data, extension):
             pdf.add_page(orientation="P")
             pdf.set_font("helvetica")
             pdf.multi_cell(w=0, h=10, text=data, border=0, align="L")
-            pdf.output("edited.pdf", "F")
+            pdf.output("edited.pdf", "S")
             return open("edited.pdf", "rb").read()
         case ".txt":
             return data
