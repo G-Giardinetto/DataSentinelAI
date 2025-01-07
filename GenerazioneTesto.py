@@ -7,7 +7,7 @@ from openai import OpenAI
 def generateReport(document):
 
     client = start()
-    
+
     completion = client.chat.completions.create(model ='lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf',messages=[
                         {"role": "system", "content": "Initially you should know if the user consents to treating of "
                                                       "his data, if yes you can do anything you want with this data. "
