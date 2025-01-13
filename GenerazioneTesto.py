@@ -42,7 +42,7 @@ def editDocument(document,report):
         model='lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf', messages=[
             {"role": "system", "content": f'You are an assistant and you must edit a text that the user will '
                                           f'provide. Your task is to reduce the amount of sensitive information following a provided report as guideline.'
-                                          f'You should answer with the original text with the modifications.'},
+                                          f'You should answer with the full original text with the modifications.'},
             {"role": "user", "content":
                                           f'The report contains an analysis of data in text that could be considered sensitive and for each one it contains '
                                           f'the reason on why it was categorized as sensitive and also a suggestion on how to edit it. '
@@ -59,7 +59,14 @@ def editDocument(document,report):
 
 
 def extractEntities(text):
-    return ner(text)
+    dic = {}
+    result= ner(text)
+    for el in result:
+        if el['entity_group'] not in dic:
+            dic[el['entity_group']] = []
+        if el['word'] not in dic[el['entity_group']]:
+            dic[el['entity_group']].append(el['word'])
+    return dic
 
 def start():
     os.system('lms server start')
