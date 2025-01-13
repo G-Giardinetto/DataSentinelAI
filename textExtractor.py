@@ -25,7 +25,7 @@ def extract(file):
     return None
 
 def findExtension(file):
-    return re.search(r"\.+[A-Za-z]*", file.name).group()
+    return re.findall(r"\.+[A-Za-z]*", file.name).pop()
 
 def writeFile(data, extension):
     match extension:
