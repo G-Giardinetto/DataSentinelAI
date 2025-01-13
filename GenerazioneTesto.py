@@ -1,6 +1,13 @@
 import os
 from openai import OpenAI
+from transformers import BertTokenizerFast, BertForTokenClassification
+from transformers import pipeline
+from torch import cuda
 
+tokenizer = BertTokenizerFast.from_pretrained("osiria/bert-italian-cased-ner")
+model = BertForTokenClassification.from_pretrained("osiria/bert-italian-cased-ner")
+
+ner = pipeline("ner", model = model, tokenizer = tokenizer, aggregation_strategy="first", device="cuda" if cuda.is_available() else "cpu")
 
 
 #semplice codice per generare testo
@@ -50,6 +57,9 @@ def editDocument(document,report):
     stop()
     return (completion.choices[0].message.content).strip()
 
+
+def extractEntities(text):
+    return ner(text)
 
 def start():
     os.system('lms server start')
