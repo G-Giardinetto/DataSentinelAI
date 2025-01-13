@@ -4,15 +4,16 @@ from textExtractor import findExtension
 import GenerazioneTesto
 
 st.set_page_config(page_title="Analizza il tuo documento",layout="wide")
-st.title('Analyze your data')
 first,center,last = st.columns([0.15,0.7,0.15])
+_,ccenter,_ = center.columns(3)
+ccenter.title('Analyze your data')
 file = center.file_uploader("Upload your file to get you report", type=['pdf', 'docx', 'txt'], accept_multiple_files=False)
 testo=""
 flag=False
 if file is not None:
     st.session_state['fileExtension'] = findExtension(file)
     testo = extract(file)
-    if center.button("Genera report", type="primary"):
+    if center.button("Genera report", type="primary", use_container_width=True):
         flag=True
         with center.chat_message("assistant"):
             with center.status('**Analizzando...**', expanded=True) as status:
@@ -34,7 +35,7 @@ if button:
     with center.status('Modificando...') as status:
         left, center, right = center.columns(3)
         edited = GenerazioneTesto.editDocument(testo, report)
-        nerEdited = GenerazioneTesto.extractEntities(edited)
+        nerEdited = GenerazioneTesto.extractEntities(testo)
         status.update(
             label="Modifica completata!", state="complete", expanded=True)
         left.markdown(f"File modificato:\n\n{edited}")
