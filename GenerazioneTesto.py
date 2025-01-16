@@ -3,41 +3,48 @@ from openai import OpenAI
 from transformers import BertTokenizerFast, BertForTokenClassification
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import pipeline
+from gliner import GLiNER
 from torch import cuda
 
-firstNerModel= "osiria/bert-italian-uncased-ner"
+firstNerModel= "osiria/bert-italian-cased-ner"
 secondNerModel= "Babelscape/wikineural-multilingual-ner"
-thirdNerModel= "DeepMount00/Italian_NER_XXL"
-fourthNerModel="ZurichNLP/swissbert-ner"
+thirdNerModel="ZurichNLP/swissbert-ner"
+fourthNerModel= "DeepMount00/universal_ner_ita"
+fifthNerModel="urchade/gliner_multi_pii-v1"
 
 
 #carico il primo modello NER
+
 firstTokenizer = BertTokenizerFast.from_pretrained(firstNerModel)
 firstModel = BertForTokenClassification.from_pretrained(firstNerModel)
-
-firstNer = pipeline("ner", model = firstModel, tokenizer = firstTokenizer, aggregation_strategy="first", device="cuda" if cuda.is_available() else "cpu")
+device = "cuda" if cuda.is_available() else "cpu"
+firstNer = pipeline("ner", model = firstModel, tokenizer = firstTokenizer, aggregation_strategy="first", device=device)
 
 #carico il secondo modello NER
 
 secondTokenizer = AutoTokenizer.from_pretrained(secondNerModel)
 secondModel = AutoModelForTokenClassification.from_pretrained(secondNerModel)
 
-secondNer = pipeline("ner", model=secondModel, tokenizer=secondTokenizer, grouped_entities=True)
+secondNer = pipeline("ner", model=secondModel, tokenizer=secondTokenizer, grouped_entities=True, device=device)
 
 #carico il terzo modello NER
 
-thirdTokenizer = AutoTokenizer.from_pretrained(thirdNerModel)
-thirdModel = AutoModelForTokenClassification.from_pretrained(thirdNerModel)
-
-thirdNer = pipeline("ner", model=thirdModel, tokenizer=thirdTokenizer)
+thirdNer = pipeline(
+  model=thirdNerModel,
+  aggregation_strategy="simple",)
+thirdNer.model.set_default_language("it_CH")
 
 #carico il quarto modello NER
 
-fourthNer = pipeline(
-  model=fourthNerModel,
-  aggregation_strategy="simple",)
-fourthNer.model.set_default_language("it_CH")
-#semplice codice per generare testo
+fourthNer = GLiNER.from_pretrained("DeepMount00/universal_ner_ita")
+fourthNerLabels = ["comune", "codice fiscale", "importo", "società", "indirizzo"]
+
+#carico il quinto modello NER
+
+fifthNer = GLiNER.from_pretrained(fifthNerModel)
+fifthNerLabels= ['person', 'full address', 'company', 'phone number', 'postal code']
+
+###Funzione per generare il report
 def generateReport(document):
 
     client = start()
@@ -60,6 +67,7 @@ def generateReport(document):
     stop()
     return completion.choices[0].message.content.strip()
 
+###Funzione per modificare il documento in base al report
 def editDocument(document,report):
 
     client = start()
@@ -87,24 +95,47 @@ def editDocument(document,report):
 
 
 def extractEntities(text):
-    dic = {}
-    result= firstNer(text)
-    for el in result:
-        if el['entity_group'] not in dic:
-            dic[el['entity_group']] = []
-        if el['word'] not in dic[el['entity_group']]:
-            dic[el['entity_group']].append(el['word'])
-    entities= f"{firstNerModel}:\n\n\n\n"
-    for key in dic:
-        match key:
-            case "PER":
-                entities += f"Persone: \n\n{dic[key]}\n\n\n\n"
-            case "LOC":
-                entities += f"Luoghi: \n\n{dic[key]}\n\n\n\n"
-            case "ORG":
-                entities += f"Organizzazioni: \n\n{dic[key]}\n\n\n\n"
-            case "MISC":
-                entities += f"Varie: \n\n{dic[key]}\n\n\n\n"
+    dic = {firstNerModel: {}, secondNerModel: {}, thirdNerModel: {}, fourthNerModel: {}, fifthNerModel: {}}
+    subdics = list(dic.keys())
+    entities=""
+    # result= firstNer(text)
+    for subdic in subdics: #per ogni modello NER
+        if subdic == firstNerModel:
+            result = firstNer(text)
+        elif subdic == secondNerModel:
+            result = secondNer(text)
+        elif subdic == thirdNerModel:
+            result = thirdNer(text)
+        elif subdic == fourthNerModel:
+            result = fourthNer.predict_entities(text, fourthNerLabels)
+        elif subdic == fifthNerModel:
+            result = fifthNer.predict_entities(text, fifthNerLabels)
+        if subdic != fourthNerModel and subdic != fifthNerModel:
+            for el in result:
+                if el['entity_group'] not in dic.get(subdic):
+                    dic.get(subdic)[el['entity_group']] = []
+                if el['word'] not in dic.get(subdic)[el['entity_group']]:
+                    dic.get(subdic)[el['entity_group']].append(el['word'])
+            entities+= f"**{subdic}**:\n\n\n\n"
+            for key in dic.get(subdic):
+                match key:
+                    case "PER":
+                        entities += f"*Persone*: \n\n{dic.get(subdic)[key]}\n\n\n\n"
+                    case "LOC":
+                        entities += f"*Luoghi*: \n\n{dic.get(subdic)[key]}\n\n\n\n"
+                    case "ORG":
+                        entities += f"*Organizzazioni*: \n\n{dic.get(subdic)[key]}\n\n\n\n"
+                    case "MISC":
+                        entities += f"*Varie*: \n\n{dic.get(subdic)[key]}\n\n\n\n"
+        else:
+            for el in result:
+                if el['label'] not in dic.get(subdic):
+                    dic.get(subdic)[el['label']] = []
+                if el['text'] not in dic.get(subdic)[el['label']]:
+                    dic.get(subdic)[el['label']].append(el['text'])
+            entities+= f"**{subdic}**:\n\n\n\n"
+            for key in dic.get(subdic):
+                entities += f"*{key}*: \n\n{dic.get(subdic)[key]}\n\n\n\n"
     return entities
 
 def start():
@@ -115,4 +146,4 @@ def start():
 
 def stop():
     os.system('lms unload --all')#scarico dal server tutti i modelli
-    os.system('lms server stop')
+    os.system('lms server stop')#fermo il server
