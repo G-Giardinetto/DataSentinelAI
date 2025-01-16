@@ -42,5 +42,5 @@ if button:
         center.markdown(f"Entità riconosciute:\n\n{nerEdited}")
         right.markdown(f"File originale:\n\n{testo}")
     extension = st.session_state['fileExtension']
-    center.download_button(label="Scarica file modificato", data=writeFile(edited, extension),
+    left.download_button(label="Scarica file modificato", data=writeFile(edited, extension),
                        file_name='edited' + extension)
