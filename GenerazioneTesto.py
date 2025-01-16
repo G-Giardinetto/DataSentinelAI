@@ -50,7 +50,7 @@ def generateReport(document):
     client = start()
     completion = client.chat.completions.create(model ='lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf',messages=[
                         {"role": "system", "content": "Initially you should know if the user consents to treating of "
-                                                      "his data, if yes you can do anything his data. "
+                                                      "his data, if yes you can do anything his data. You do not have to summarize the text. "
                                                       "Your task is to determine if the information could be "
                                                       "sensitive. For each sensitive information, your answers must follow the pattern: '[WhatToEdit]\n\n "
                                                       "[Reason]\n\n'. If you don't find any sensitive information, "
@@ -116,26 +116,26 @@ def extractEntities(text):
                     dic.get(subdic)[el['entity_group']] = []
                 if el['word'] not in dic.get(subdic)[el['entity_group']]:
                     dic.get(subdic)[el['entity_group']].append(el['word'])
-            entities+= f"**{subdic}**:\n\n\n\n"
+            entities+= f"### {subdic}:\n\n\n\n"
             for key in dic.get(subdic):
                 match key:
                     case "PER":
-                        entities += f"*Persone*: \n\n{dic.get(subdic)[key]}\n\n\n\n"
+                        entities += f"#### Persone: \n\n{dic.get(subdic)[key]}\n\n\n\n"
                     case "LOC":
-                        entities += f"*Luoghi*: \n\n{dic.get(subdic)[key]}\n\n\n\n"
+                        entities += f"#### Luoghi: \n\n{dic.get(subdic)[key]}\n\n\n\n"
                     case "ORG":
-                        entities += f"*Organizzazioni*: \n\n{dic.get(subdic)[key]}\n\n\n\n"
+                        entities += f"#### Organizzazioni: \n\n{dic.get(subdic)[key]}\n\n\n\n"
                     case "MISC":
-                        entities += f"*Varie*: \n\n{dic.get(subdic)[key]}\n\n\n\n"
+                        entities += f"#### Varie: \n\n{dic.get(subdic)[key]}\n\n\n\n"
         else:
             for el in result:
                 if el['label'] not in dic.get(subdic):
                     dic.get(subdic)[el['label']] = []
                 if el['text'] not in dic.get(subdic)[el['label']]:
                     dic.get(subdic)[el['label']].append(el['text'])
-            entities+= f"**{subdic}**:\n\n\n\n"
+            entities+= f"### {subdic}:\n\n\n\n"
             for key in dic.get(subdic):
-                entities += f"*{key}*: \n\n{dic.get(subdic)[key]}\n\n\n\n"
+                entities += f"#### {key}: \n\n{dic.get(subdic)[key]}\n\n\n\n"
     return entities
 
 def start():
