@@ -8,6 +8,8 @@ from torch import cuda
 firstNerModel= "osiria/bert-italian-uncased-ner"
 secondNerModel= "Babelscape/wikineural-multilingual-ner"
 thirdNerModel= "DeepMount00/Italian_NER_XXL"
+fourthNerModel="ZurichNLP/swissbert-ner"
+
 
 #carico il primo modello NER
 firstTokenizer = BertTokenizerFast.from_pretrained(firstNerModel)
@@ -29,6 +31,12 @@ thirdModel = AutoModelForTokenClassification.from_pretrained(thirdNerModel)
 
 thirdNer = pipeline("ner", model=thirdModel, tokenizer=thirdTokenizer)
 
+#carico il quarto modello NER
+
+fourthNer = pipeline(
+  model=fourthNerModel,
+  aggregation_strategy="simple",)
+fourthNer.model.set_default_language("it_CH")
 #semplice codice per generare testo
 def generateReport(document):
 
