@@ -3,6 +3,8 @@ from textExtractor import extract, writeFile
 from textExtractor import findExtension
 import GenerazioneTesto
 
+containerHeight=500
+
 st.set_page_config(page_title="Analizza il tuo documento",layout="wide")
 first,center,last = st.columns([0.15,0.7,0.15])
 _,ccenter,_ = center.columns(3)
@@ -19,8 +21,8 @@ if file is not None:
             with center.status('**Analizzando...**', expanded=True) as status:
                 report = GenerazioneTesto.generateReport(testo)
                 status.update(
-                    label="Analisi completa!", state="complete", expanded=True)
-                center.markdown(f"Ecco il tuo report:\n\n {report}")
+                    label="**Analisi completa!**", state="complete", expanded=True)
+                st.markdown(f"# Ecco il tuo report:\n\n {report}")
                 st.session_state['report'] = report
 
 if flag:
@@ -32,20 +34,23 @@ else:
 
 if button:
     report=st.session_state['report']
-    with center.status('Modificando...') as status:
-        left, center, right = center.columns(3)
+    with center.status('**Modificando...**') as status:
+        left, centerr, right = center.columns(3)
         edited = GenerazioneTesto.editDocument(testo, report)
         nerEdited = GenerazioneTesto.extractEntities(testo)
         status.update(
-            label="Modifica completata!", state="complete", expanded=True)
-        with left.container(300):
-            left.markdown(f"## File modificato:\n\n{edited}")
-        with center.container(300):
-            center.markdown(f"## Entità riconosciute:\n\n{nerEdited}")
-        with right.container(300):
-            right.markdown(f"## File originale:\n\n{testo}")
+            label="**Modifica completata!**", state="complete", expanded=True)
+        leftContainer = left.container(height=containerHeight)
+        centerContainer = centerr.container(height=containerHeight)
+        rightContainer= right.container(height=containerHeight)
+
+        leftContainer.markdown(f"## File modificato:\n\n{edited}")
+        centerContainer.markdown(f"## Entità riconosciute:\n\n{nerEdited}")
+        rightContainer.markdown(f"## File originale:\n\n{testo}")
     extension = st.session_state['fileExtension']
     left.download_button(label="**Scarica file modificato**", data=writeFile(edited, extension),
                        file_name='edited' + extension)
-    center.download_button(label="**Scarica entità riconosciute**", data=writeFile(nerEdited, extension),
-                         file_name='recognized' + extension)
+    centerr.download_button(label="**Scarica entità riconosciute**", data=writeFile(nerEdited, ".txt"),
+                         file_name='recognized' + ".txt")
+
+    center.download_button(label="**Scarica file modificato\n ed entità riconosciute**", data=writeFile(testo+"\n\n"+'-'*30+"Entità riconosciute:"+'-'*30+"\n\n"+nerEdited, extension), file_name="Bundle"+extension)
