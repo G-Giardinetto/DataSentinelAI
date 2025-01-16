@@ -38,9 +38,14 @@ if button:
         nerEdited = GenerazioneTesto.extractEntities(testo)
         status.update(
             label="Modifica completata!", state="complete", expanded=True)
-        left.markdown(f"File modificato:\n\n{edited}")
-        center.markdown(f"Entità riconosciute:\n\n{nerEdited}")
-        right.markdown(f"File originale:\n\n{testo}")
+        with left.container(300):
+            left.markdown(f"## File modificato:\n\n{edited}")
+        with center.container(300):
+            center.markdown(f"## Entità riconosciute:\n\n{nerEdited}")
+        with right.container(300):
+            right.markdown(f"## File originale:\n\n{testo}")
     extension = st.session_state['fileExtension']
-    left.download_button(label="Scarica file modificato", data=writeFile(edited, extension),
+    left.download_button(label="**Scarica file modificato**", data=writeFile(edited, extension),
                        file_name='edited' + extension)
+    center.download_button(label="**Scarica entità riconosciute**", data=writeFile(nerEdited, extension),
+                         file_name='recognized' + extension)
