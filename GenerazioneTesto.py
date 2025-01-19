@@ -93,13 +93,32 @@ def editDocument(document,report):
     stop()
     return completion.choices[0].message.content.strip()
 
+def sensitiveInformations(report):
 
+    client = start()
+
+    completion = client.chat.completions.create(
+        model='lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf', messages=[
+            {"role": "system", "content": f'Considering the report "{report}". for each sensitive information, '
+                                          f'you should answer with a list of context in which the information could be sensitive. '
+                                          f'Following the pattern: "[SensitiveInformation]\n\n[Number]. [Context]"\n\t[Number] [Reason] '},
+            {"role": "user",
+             "content": f'Give me the report of the contexts in which these information could be sensitive.'},
+            ], temperature=0,
+        )
+
+    stop()
+    return completion.choices[0].message.content.strip()
+
+
+
+### Funzione per estrarre le entità dal testo, modulare in base ai modelli NER
 def extractEntities(text):
-    dic = {firstNerModel: {}, secondNerModel: {}, thirdNerModel: {}, fourthNerModel: {}, fifthNerModel: {}}
-    subdics = list(dic.keys())
+    dic = {firstNerModel: {}, secondNerModel: {}, thirdNerModel: {}, fourthNerModel: {}, fifthNerModel: {}} #Dizionario inzializzato con i momi dei modelli NER
+    subdics = list(dic.keys()) #Lista dei modelli ner
     entities=""
     # result= firstNer(text)
-    for subdic in subdics: #per ogni modello NER
+    for subdic in subdics: #per ogni modello NER assegna result in base al modello
         if subdic == firstNerModel:
             result = firstNer(text)
         elif subdic == secondNerModel:
@@ -110,14 +129,14 @@ def extractEntities(text):
             result = fourthNer.predict_entities(text, fourthNerLabels)
         elif subdic == fifthNerModel:
             result = fifthNer.predict_entities(text, fifthNerLabels)
-        if subdic != fourthNerModel and subdic != fifthNerModel:
-            for el in result:
-                if el['entity_group'] not in dic.get(subdic):
+        if subdic != fourthNerModel and subdic != fifthNerModel:    #Se il modello NER non è il quarto o il quinto (che hanno label diverse per le entità)
+            for el in result:   #Per ogni entità riconosciuta nel risultato
+                if el['entity_group'] not in dic.get(subdic):   #Se il label non è presente nel dizionario del modello NER corrente lo aggiunge
                     dic.get(subdic)[el['entity_group']] = []
-                if el['word'] not in dic.get(subdic)[el['entity_group']]:
+                if el['word'] not in dic.get(subdic)[el['entity_group']]: #Se la parola non è presente fra le parole la aggiunge tra le parole con lo stesso label
                     dic.get(subdic)[el['entity_group']].append(el['word'])
-            entities+= f"### {subdic}:\n\n\n\n"
-            for key in dic.get(subdic):
+            entities+= f"### {subdic}:\n\n\n\n"     #Aggiunge il nome del modello NER al report
+            for key in dic.get(subdic):     #Per ogni label nel dizionario del modello NER stampa le entità riconosciute con quel label
                 match key:
                     case "PER":
                         entities += f"#### Persone: \n\n{dic.get(subdic)[key]}\n\n\n\n"
@@ -127,7 +146,7 @@ def extractEntities(text):
                         entities += f"#### Organizzazioni: \n\n{dic.get(subdic)[key]}\n\n\n\n"
                     case "MISC":
                         entities += f"#### Varie: \n\n{dic.get(subdic)[key]}\n\n\n\n"
-        else:
+        else:   #Se il modello NER è il quarto o il quinto ha un comportamento analogo a prima ma con label diverse
             for el in result:
                 if el['label'] not in dic.get(subdic):
                     dic.get(subdic)[el['label']] = []
