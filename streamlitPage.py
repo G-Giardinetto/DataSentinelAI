@@ -1,4 +1,6 @@
 import streamlit as st
+
+from GenerazioneTesto import sensitiveInformations
 from textExtractor import extract, writeFile
 from textExtractor import findExtension
 import GenerazioneTesto
@@ -52,5 +54,7 @@ if button:
                        file_name='edited' + extension)
     centerr.download_button(label="**Scarica entità riconosciute**", data=writeFile(nerEdited, ".txt"),
                          file_name='recognized' + ".txt")
-
     center.download_button(label="**Scarica file modificato\n ed entità riconosciute**", data=writeFile(testo+"\n\n"+'-'*30+"Entità riconosciute:"+'-'*30+"\n\n"+nerEdited, extension), file_name="Bundle"+extension)
+    firstContainer = first.container()
+    firstContainerr = firstContainer.container(height=containerHeight%2)
+    firstContainerr.markdown(f"## Contesti in cui le entità possono essere sensibili:\n\n{sensitiveInformations(report)}")
