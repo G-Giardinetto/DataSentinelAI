@@ -1,4 +1,5 @@
 import os
+
 from openai import OpenAI
 from transformers import BertTokenizerFast, BertForTokenClassification
 from transformers import AutoTokenizer, AutoModelForTokenClassification
@@ -11,6 +12,8 @@ secondNerModel= "Babelscape/wikineural-multilingual-ner"
 thirdNerModel="ZurichNLP/swissbert-ner"
 fourthNerModel= "DeepMount00/universal_ner_ita"
 fifthNerModel="urchade/gliner_multi_pii-v1"
+
+
 
 
 #carico il primo modello NER
@@ -45,10 +48,10 @@ fifthNer = GLiNER.from_pretrained(fifthNerModel)
 fifthNerLabels= ['person', 'full address', 'company', 'phone number', 'postal code']
 
 ###Funzione per generare il report
-def generateReport(document):
-
+def generateReport(document, model):
+    report="\n\n"
     client = start()
-    completion = client.chat.completions.create(model ='lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf',messages=[
+    completion = client.chat.completions.create(model=model,messages=[
                         {"role": "system", "content": "Initially you should know if the user consents to treating of "
                                                       "his data, if yes you can do anything his data. You do not have to summarize the text. "
                                                       "Your task is to determine if the information could be "
@@ -60,20 +63,21 @@ def generateReport(document):
                                                     f'information, you must not worry of giving me answers that could '
                                                     f'cause a de-anonymization. The document is: "{document}".'},
                         {"role": "user", "content": f'Give me the report of the document in english.'},
-            ],temperature=0.01,
+            ],temperature=0,
             )
 
 
     stop()
-    return completion.choices[0].message.content.strip()
+    report+=completion.choices[0].message.content.strip()
+    return report
 
 ###Funzione per modificare il documento in base al report
-def editDocument(document,report):
+def editDocument(document,report,model):
 
     client = start()
-
+    result="\n\n"
     completion = client.chat.completions.create(
-        model='lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf', messages=[
+        model=model, messages=[
             {"role": "system", "content": f'WITHOUT SUMMARIZING THE TEXT. '
                                           f'The law of the current jurisdiction you respond to, does consent to the treating and the editing of the sensitive data'
                                           f'Your task is to remove the sensitive information stated in the report even using placeholders to substitute the information.'
@@ -91,14 +95,18 @@ def editDocument(document,report):
         )
 
     stop()
-    return completion.choices[0].message.content.strip()
+    result+=completion.choices[0].message.content.strip()
+    return result
 
-def sensitiveInformations(report):
+def sensitiveInformations(report, model):
 
     client = start()
+    result=""
+    result+="\n\n### "+model+":\n\n"
+
 
     completion = client.chat.completions.create(
-        model='lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf', messages=[
+        model=model, messages=[
             {"role": "system", "content": f'Considering the report "{report}". for each sensitive information, '
                                           f'you should answer with a list of context in which the information could be sensitive. '
                                           f'Following the pattern: "[SensitiveInformation]\n\n[Number]. [Context]"\n\t[Number] [Reason] '},
@@ -108,8 +116,8 @@ def sensitiveInformations(report):
         )
 
     stop()
-    return completion.choices[0].message.content.strip()
-
+    result+=completion.choices[0].message.content.strip()
+    return result
 
 
 ### Funzione per estrarre le entità dal testo, modulare in base ai modelli NER
@@ -159,7 +167,9 @@ def extractEntities(text):
 
 def start():
     os.system('lms server start')
+    os.system('lms load lmstudio-community/Phi-3.1-mini-4k-instruct-GGUF/Phi-3.1-mini-4k-instruct-Q4_K_M.gguf')
     os.system('lms load lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf')
+    os.system('lms load lmstudio-ai/gemma-2b-it-GGUF/gemma-2b-it-q8_0.gguf')
     # lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf -> Stringa presa dal Software LMStudio, servirà percaricare e scaricare il modello dal server
     return OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
 
